@@ -8,7 +8,8 @@ import {
   SettingOutlined,
   LoadingOutlined,
   SendOutlined,
-  UnorderedListOutlined
+  ClearOutlined,
+  PlusCircleOutlined
 } from '@ant-design/icons'
 import {
   aiConfigWikiLink
@@ -23,6 +24,8 @@ const MAX_HISTORY = 100
 export default function AIChat (props) {
   const [prompt, setPrompt] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+
+  const MAX_CONTEXT_PAIRS = props.config.contextMessageCountAI || 5 // Use configurable value, default to 5
 
   function handlePromptChange (e) {
     setPrompt(e.target.value)
@@ -39,6 +42,37 @@ export default function AIChat (props) {
     }
     if (!prompt.trim() || isLoading) return
     setIsLoading(true)
+
+    const buildMessages = () => {
+      const role = buildRole()
+      const history = window.store.aiChatHistory
+      const messages = []
+      let contextCount = 0
+
+      // Iterate from the end to build context, stopping at separator or MAX_CONTEXT_PAIRS
+      for (let i = history.length - 1; i >= 0; i--) {
+        const item = history[i]
+        if (item.type === 'separator') {
+          break // Stop if a separator is found
+        }
+        if (item.response) {
+          messages.unshift({ role: 'assistant', content: item.response })
+        }
+        messages.unshift({ role: 'user', content: item.prompt })
+        contextCount++
+        if (contextCount >= MAX_CONTEXT_PAIRS) {
+          break
+        }
+      }
+
+      return [
+        { role: 'system', content: role },
+        ...messages,
+        { role: 'user', content: prompt }
+      ]
+    }
+
+    const messages = buildMessages()
 
     // Create a placeholder entry for the streaming response
     const chatId = uid()
@@ -61,9 +95,8 @@ export default function AIChat (props) {
     try {
       const aiResponse = await window.pre.runGlobalAsync(
         'AIchat',
-        prompt,
+        messages, // Pass the formatted messages array
         props.config.modelAI,
-        buildRole(),
         props.config.baseURLAI,
         props.config.apiPathAI,
         props.config.apiKeyAI,
@@ -175,6 +208,16 @@ export default function AIChat (props) {
 
   function clearHistory () {
     window.store.aiChatHistory = []
+    startNewChat()
+  }
+
+  function startNewChat () {
+    window.store.aiChatHistory.push({
+      type: 'separator',
+      id: uid(),
+      timestamp: Date.now()
+    })
+    window.store.aiChatHistory = [...window.store.aiChatHistory] // Force re-render
   }
 
   function renderSendIcon () {
@@ -223,7 +266,7 @@ export default function AIChat (props) {
           className='ai-chat-textarea'
         />
         <Flex className='ai-chat-terminals' justify='space-between' align='center'>
-          <Flex align='center'>
+          <Flex align='center' gap={5}>
             <TabSelect
               selectedTabIds={props.selectedTabIds}
               tabs={props.tabs}
@@ -231,15 +274,17 @@ export default function AIChat (props) {
             />
             <SettingOutlined
               onClick={toggleConfig}
-              className='mg1l pointer icon-hover toggle-ai-setting-icon'
+              className='ai-chat-icon-mg pointer icon-hover toggle-ai-setting-icon'
             />
-            <UnorderedListOutlined
+            <ClearOutlined
               onClick={clearHistory}
-              className='mg2x pointer clear-ai-icon icon-hover'
+              className='ai-chat-icon-mg pointer clear-ai-icon icon-hover'
               title='Clear AI chat history'
             />
-            <HelpIcon
-              link={aiConfigWikiLink}
+            <PlusCircleOutlined
+              onClick={startNewChat}
+              className='ai-chat-icon-mg pointer new-ai-chat-icon icon-hover'
+              title='Start new AI chat'
             />
           </Flex>
           {renderSendIcon()}

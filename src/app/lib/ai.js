@@ -26,9 +26,8 @@ const createAIClient = (baseURL, apiKey, proxy) => {
 }
 
 exports.AIchat = async (
-  prompt,
+  messages,
   model = defaultSettings.modelAI,
-  role = defaultSettings.roleAI,
   baseURL = defaultSettings.baseURLAI,
   path = defaultSettings.apiPathAI,
   apiKey,
@@ -37,24 +36,13 @@ exports.AIchat = async (
 ) => {
   try {
     const client = createAIClient(baseURL, apiKey, proxy)
+    log.debug('AIchat - baseURL:', baseURL, 'path:', path)
 
-    // Determine if we should use streaming based on the prompt content
-    // Command suggestions should not use streaming for quick response
-    const isCommandSuggestion = prompt.includes('give me max 5 command suggestions')
-    const useStream = stream && !isCommandSuggestion
+    const useStream = stream
 
     const requestData = {
       model,
-      messages: [
-        {
-          role: 'system',
-          content: role
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
+      messages,
       stream: useStream
     }
 
@@ -95,8 +83,19 @@ exports.AIchat = async (
   } catch (e) {
     log.error('AI chat error')
     log.error(e)
+    let errorMessage = e.message
+
+    if (e.response && e.response.data && e.response.data.error) {
+      const apiError = e.response.data.error
+      if (apiError.code === 'context_length_exceeded' || apiError.message.includes('context length') || apiError.message.includes('prompt too long')) {
+        errorMessage = 'Context length exceeded. Please start a new chat or reduce the number of context messages.'
+      } else {
+        errorMessage = apiError.message
+      }
+    }
+
     return {
-      error: e.message,
+      error: errorMessage,
       stack: e.stack
     }
   }

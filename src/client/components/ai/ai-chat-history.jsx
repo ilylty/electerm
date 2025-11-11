@@ -18,6 +18,13 @@ export default auto(function AIChatHistory ({ history }) {
     <div ref={historyRef} className='ai-history-wrap'>
       {
         history.map((item) => {
+          if (item.type === 'separator') {
+            return (
+              <div key={item.id} className='ai-chat-separator'>
+                <span className='ai-chat-separator-text'>New Chat Started</span>
+              </div>
+            )
+          }
           return (
             <AIChatHistoryItem
               key={item.id}

@@ -1,5 +1,11 @@
 export default [
   {
+    label: 'Local',
+    baseURL: 'http://192.168.31.96:15000/v1',
+    homepage: 'http://192.168.31.96:15000',
+    models: ['qwen/qwen3-coder-plus']
+  },
+  {
     label: 'OpenAI',
     baseURL: 'https://api.openai.com/v1',
     homepage: 'https://openai.com',

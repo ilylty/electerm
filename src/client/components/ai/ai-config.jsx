@@ -4,7 +4,8 @@ import {
   Button,
   AutoComplete,
   Alert,
-  Space
+  Space,
+  InputNumber
 } from 'antd'
 import { useEffect, useState } from 'react'
 import Link from '../common/external-link'
@@ -123,7 +124,11 @@ export default function AIConfigForm ({ initialValues, onSubmit, showAIConfig })
               label='API PATH'
               name='apiPathAI'
               rules={[
-                { required: true, message: 'Please input API PATH' }
+                { required: true, message: 'Please input API PATH' },
+                {
+                  pattern: /^(?!https?:\/\/)/,
+                  message: 'API PATH should not be a full URL (e.g., should not start with http:// or https://)'
+                }
               ]}
               noStyle
             >
@@ -191,6 +196,18 @@ export default function AIConfigForm ({ initialValues, onSubmit, showAIConfig })
           >
             <Input />
           </AutoComplete>
+        </Form.Item>
+
+        <Form.Item
+          label='Context Message Count'
+          name='contextMessageCountAI'
+          tooltip='Number of recent message pairs to send as context (e.g., 5 means 5 user messages and 5 assistant responses)'
+          rules={[
+            { required: true, message: 'Please input context message count!' },
+            { type: 'number', min: 0, max: 20, message: 'Context message count must be between 0 and 20' }
+          ]}
+        >
+          <InputNumber min={0} max={20} placeholder='e.g., 5' style={{ width: '100%' }} />
         </Form.Item>
 
         <Form.Item>

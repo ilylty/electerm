@@ -41,6 +41,8 @@
     background transparent
     z-index 1
     font-size 16px
+  .ai-chat-icon-mg
+    margin-left 5px
 
 .code-block
   width 100%
@@ -53,10 +55,28 @@
     white-space pre-wrap
     word-break break-all
 
+// New chat separator styles
+.ai-chat-separator
+  display flex
+  align-items center
+  text-align center
+  margin 20px 0
+  &:before, &:after
+    content ''
+    flex 1
+    border-bottom 1px dashed var(--main-light)
+  &:before
+    margin-right .5em
+  &:after
+    margin-left .5em
+.ai-chat-separator-text
+  color var(--main-light)
+  font-size 0.9em
+  white-space nowrap
+
 .clear-ai-icon
   position relative
   &::after
-    content '×'
     position absolute
     font-size 12px
     top 8px
